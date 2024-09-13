@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model project_members {
+  user_id    Int
+  project_id Int
+  projects   projects @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([user_id, project_id])
+}
+
+model projects {
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(255)
+  description     String?
+  owner_id        Int
+  created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?         @default(now()) @db.Timestamp(6)
+  project_members project_members[]
+  users           users             @relation(fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reports         reports[]
+  tasks           tasks[]
+}
+
+model reports {
+  id         Int       @id @default(autoincrement())
+  title      String    @db.VarChar(255)
+  content    String?
+  project_id Int
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+  projects   projects  @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tasks {
+  id          Int           @id @default(autoincrement())
+  title       String        @db.VarChar(255)
+  description String?
+  status      taskstatus?   @default(PENDING)
+  project_id  Int
+  assignee_id Int?
+  priority    taskpriority? @default(MEDIUM)
+  due_date    DateTime?     @db.Timestamp(6)
+  created_at  DateTime?     @default(now()) @db.Timestamp(6)
+  updated_at  DateTime?     @default(now()) @db.Timestamp(6)
+  users       users?        @relation(fields: [assignee_id], references: [id], onUpdate: NoAction)
+  projects    projects      @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model users {
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(255)
+  email           String            @unique @db.VarChar(255)
+  password_hash   String            @db.VarChar(255)
+  role            role?             @default(USER)
+  created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  updated_at      DateTime?         @default(now()) @db.Timestamp(6)
+  project_members project_members[]
+  projects        projects[]
+  tasks           tasks[]
+}
+
+enum role {
+  USER
+  ADMIN
+  PROJECT_MANAGER
+}
+
+enum taskpriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum taskstatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  BLOCKED
+}
