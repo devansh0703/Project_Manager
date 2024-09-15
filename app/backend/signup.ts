@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import prisma from './backend/database';
+import prisma from './database';
 
 const signup = async (req: Request, res: Response) => {
     const { name, email, password, role } = req.body;

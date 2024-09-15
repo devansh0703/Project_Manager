@@ -7,6 +7,49 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model comment_projects {
+  comment_id Int
+  project_id Int
+  comments   comments @relation(fields: [comment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  projects   projects @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([comment_id, project_id])
+}
+
+model comment_tasks {
+  comment_id Int
+  task_id    Int
+  comments   comments @relation(fields: [comment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tasks      tasks    @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([comment_id, task_id])
+}
+
+model comment_users {
+  comment_id Int
+  user_id    Int
+  comments   comments @relation(fields: [comment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([comment_id, user_id])
+}
+
+model comments {
+  id               Int                @id @default(autoincrement())
+  content          String
+  task_id          Int
+  project_id       Int
+  user_id          Int
+  created_at       DateTime?          @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?          @default(now()) @db.Timestamp(6)
+  comment_projects comment_projects[]
+  comment_tasks    comment_tasks[]
+  comment_users    comment_users[]
+  projects         projects           @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tasks            tasks              @relation(fields: [task_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users            users              @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
 model project_members {
   user_id    Int
   project_id Int
@@ -17,16 +60,18 @@ model project_members {
 }
 
 model projects {
-  id              Int               @id @default(autoincrement())
-  name            String            @db.VarChar(255)
-  description     String?
-  owner_id        Int
-  created_at      DateTime?         @default(now()) @db.Timestamp(6)
-  updated_at      DateTime?         @default(now()) @db.Timestamp(6)
-  project_members project_members[]
-  users           users             @relation(fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  reports         reports[]
-  tasks           tasks[]
+  id               Int                @id @default(autoincrement())
+  name             String             @db.VarChar(255)
+  description      String?
+  owner_id         Int
+  created_at       DateTime?          @default(now()) @db.Timestamp(6)
+  updated_at       DateTime?          @default(now()) @db.Timestamp(6)
+  comment_projects comment_projects[]
+  comments         comments[]
+  project_members  project_members[]
+  users            users              @relation(fields: [owner_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reports          reports[]
+  tasks            tasks[]
 }
 
 model reports {
@@ -40,18 +85,20 @@ model reports {
 }
 
 model tasks {
-  id          Int           @id @default(autoincrement())
-  title       String        @db.VarChar(255)
-  description String?
-  status      taskstatus?   @default(PENDING)
-  project_id  Int
-  assignee_id Int?
-  priority    taskpriority? @default(MEDIUM)
-  due_date    DateTime?     @db.Timestamp(6)
-  created_at  DateTime?     @default(now()) @db.Timestamp(6)
-  updated_at  DateTime?     @default(now()) @db.Timestamp(6)
-  users       users?        @relation(fields: [assignee_id], references: [id], onUpdate: NoAction)
-  projects    projects      @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id            Int             @id @default(autoincrement())
+  title         String          @db.VarChar(255)
+  description   String?
+  status        taskstatus?     @default(PENDING)
+  project_id    Int
+  assignee_id   Int?
+  priority      taskpriority?   @default(MEDIUM)
+  due_date      DateTime?       @db.Timestamp(6)
+  created_at    DateTime?       @default(now()) @db.Timestamp(6)
+  updated_at    DateTime?       @default(now()) @db.Timestamp(6)
+  comment_tasks comment_tasks[]
+  comments      comments[]
+  users         users?          @relation(fields: [assignee_id], references: [id], onUpdate: NoAction)
+  projects      projects        @relation(fields: [project_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model users {
@@ -62,6 +109,8 @@ model users {
   role            role?             @default(USER)
   created_at      DateTime?         @default(now()) @db.Timestamp(6)
   updated_at      DateTime?         @default(now()) @db.Timestamp(6)
+  comment_users   comment_users[]
+  comments        comments[]
   project_members project_members[]
   projects        projects[]
   tasks           tasks[]
